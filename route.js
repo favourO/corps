@@ -2,12 +2,11 @@ const express = require('express');
 const router = express.Router();
 
 const db = require('./db');
-let dataset = {}
-let User = {}, Post = {}
+let User = {}, Post = {}, owner = {}, Posts = {}
 const post_ids = [1, 3, 4, 6];
 const uid = 1;
-
-router.get('/posts', (req, res, next) => {
+// Number one question
+router.get('/userPosts', (req, res, next) => {
     const u_sql = `SELECT u.id, u.username, u.full_name, u.profile_picture, f.following_id
         FROM user as u, follow as f Where u.id = ${uid}`;
     db.query(u_sql, (err, data, fields) => {
@@ -17,9 +16,9 @@ router.get('/posts', (req, res, next) => {
     })
 
     const post = `SELECT 
-    u.id, u.username, u.full_name, u.profile_picture,
-    p.id as post_id, p.description, p.image, p.created_at
-    FROM user as u, post as p Where u.id = p.user_id AND p.id IN (${post_ids})`
+    l.user_id,
+    p.id as liked, p.description, p.image, p.created_at
+    FROM like_post as l, post as p Where l.user_id = p.user_id AND p.id IN (${post_ids})`
 
     db.query(post, (err, data1, fields) => {
         if (err) throw err
@@ -28,10 +27,25 @@ router.get('/posts', (req, res, next) => {
 
     res.send({
         status: true,
-        data: {Post, User} 
+        data: {Post, owner: User } 
     })
     
-    console.log(User)
 });
+// Number two question
+router.get('/posts', (req, res, next) => {
+    const posts = `SELECT
+    p.id, p.description, p.image, p.created_at
+    FROM post as p Where p.id IN (${post_ids})`
+
+    db.query(posts, (err, data, fields) => {
+        if (err) throw err
+        Posts = data
+    })
+
+    res.send({
+        status: true,
+        data: {Posts } 
+    })
+})
 
 module.exports = router;
